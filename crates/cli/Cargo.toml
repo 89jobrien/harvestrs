@@ -8,7 +8,7 @@ name = "harvestrs"
 path = "src/main.rs"
 
 [dependencies]
-core = { path = "../core" }
+harvester-core = { path = "../core" }
 sources = { path = "../sources" }
 anyhow.workspace = true
 serde_json.workspace = true

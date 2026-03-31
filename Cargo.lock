@@ -214,8 +214,8 @@ dependencies = [
  "anyhow",
  "chrono",
  "clap",
- "core",
  "dirs",
+ "harvester-core",
  "rusqlite",
  "serde_json",
  "sources",
@@ -228,20 +228,6 @@ name = "colorchoice"
 version = "1.0.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "1d07550c9036bf2ae0c684c4297d503f838287c83c53686d05370d0e139ae570"
-
-[[package]]
-name = "core"
-version = "0.1.0"
-dependencies = [
- "anyhow",
- "async-trait",
- "chrono",
- "hex",
- "serde",
- "serde_json",
- "sha2",
- "thiserror",
-]
 
 [[package]]
 name = "core-foundation"
@@ -532,6 +518,20 @@ dependencies = [
  "tokio",
  "tokio-util",
  "tracing",
+]
+
+[[package]]
+name = "harvester-core"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "async-trait",
+ "chrono",
+ "hex",
+ "serde",
+ "serde_json",
+ "sha2",
+ "thiserror",
 ]
 
 [[package]]
@@ -1513,9 +1513,9 @@ dependencies = [
  "anyhow",
  "async-trait",
  "chrono",
- "core",
  "dirs",
  "git2",
+ "harvester-core",
  "reqwest",
  "serde",
  "serde_json",
