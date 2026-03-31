@@ -26,8 +26,8 @@ pub fn sync_all(projects_root: &Path, vault_root: &Path) -> Result<()> {
             .into_iter()
             .filter_map(|e| e.ok())
             .filter(|e| {
-                e.path().extension().map_or(false, |x| x == "md")
-                    && e.path().file_name().map_or(false, |n| n != "MEMORY.md")
+                e.path().extension().is_some_and(|x| x == "md")
+                    && e.path().file_name().is_some_and(|n| n != "MEMORY.md")
             })
             .collect();
 
@@ -36,11 +36,7 @@ pub fn sync_all(projects_root: &Path, vault_root: &Path) -> Result<()> {
         }
 
         // Derive human-readable project name from slug (last segment after last `-`)
-        let project_name = slug
-            .rsplit('-')
-            .next()
-            .unwrap_or(&slug)
-            .to_string();
+        let project_name = slug.rsplit('-').next().unwrap_or(&slug).to_string();
 
         let mut sections = vec![
             format!("# Claude Session Context — {}\n", project_name),
@@ -54,7 +50,12 @@ pub fn sync_all(projects_root: &Path, vault_root: &Path) -> Result<()> {
         for f in sorted_files {
             let content = std::fs::read_to_string(f.path())?;
             let body = if content.starts_with("---\n") {
-                content.splitn(3, "---\n").nth(2).unwrap_or(&content).trim().to_string()
+                content
+                    .splitn(3, "---\n")
+                    .nth(2)
+                    .unwrap_or(&content)
+                    .trim()
+                    .to_string()
             } else {
                 content.trim().to_string()
             };
@@ -81,12 +82,16 @@ mod tests {
         let projects = TempDir::new().unwrap();
         let vault = TempDir::new().unwrap();
 
-        let memory_dir = projects.path().join("-Users-joe-dev-minibox").join("memory");
+        let memory_dir = projects
+            .path()
+            .join("-Users-joe-dev-minibox")
+            .join("memory");
         fs::create_dir_all(&memory_dir).unwrap();
         fs::write(
             memory_dir.join("project_state.md"),
             "---\nname: state\ntype: project\n---\nAll tests passing.",
-        ).unwrap();
+        )
+        .unwrap();
         fs::write(memory_dir.join("MEMORY.md"), "# index").unwrap();
 
         sync_all(projects.path(), vault.path()).unwrap();

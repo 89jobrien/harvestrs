@@ -36,7 +36,7 @@ impl Source for ObsidianSource {
             .max_depth(1)
             .into_iter()
             .filter_map(|e| e.ok())
-            .filter(|e| e.path().extension().map_or(false, |x| x == "md"))
+            .filter(|e| e.path().extension().is_some_and(|x| x == "md"))
         {
             let content = std::fs::read_to_string(entry.path())
                 .map_err(HarvestError::Io)?

@@ -1,5 +1,5 @@
+use crate::{HarvestError, HarvestedItem};
 use async_trait::async_trait;
-use crate::{HarvestedItem, HarvestError};
 
 /// Port: any external data source that can produce HarvestedItems.
 /// Adapters in `sources` implement this trait.

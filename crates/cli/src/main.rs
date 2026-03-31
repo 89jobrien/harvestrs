@@ -40,14 +40,16 @@ async fn main() -> Result<()> {
                 .join(".claude/usage-data/facets"),
         )),
         Box::new(MemorySource::new(
-            dirs::home_dir().unwrap_or_default().join(".claude/projects"),
+            dirs::home_dir()
+                .unwrap_or_default()
+                .join(".claude/projects"),
         )),
         Box::new(GitSource::new(
             GitSource::default_repos(),
             cfg.git_max_commits,
         )),
         Box::new(ObsidianSource::new(cfg.vault_path().join("_daily"))),
-        Box::new(PiecesSource::default()),
+        Box::new(PiecesSource::new_default()),
     ];
     let sources: Vec<Box<dyn Source>> = all_sources
         .into_iter()

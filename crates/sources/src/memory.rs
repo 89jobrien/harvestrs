@@ -33,17 +33,22 @@ impl Source for MemorySource {
             .into_iter()
             .filter_map(|e| e.ok())
             .filter(|e| {
-                e.path().extension().map_or(false, |x| x == "md")
-                    && e.path().file_name().map_or(false, |n| n != "MEMORY.md")
+                e.path().extension().is_some_and(|x| x == "md")
+                    && e.path().file_name().is_some_and(|n| n != "MEMORY.md")
                     && e.path()
                         .parent()
                         .and_then(|p| p.file_name())
-                        .map_or(false, |n| n == "memory")
+                        .is_some_and(|n| n == "memory")
             })
         {
             let content = std::fs::read_to_string(entry.path()).map_err(HarvestError::Io)?;
             let body = if content.starts_with("---\n") {
-                content.splitn(3, "---\n").nth(2).unwrap_or(&content).trim().to_string()
+                content
+                    .splitn(3, "---\n")
+                    .nth(2)
+                    .unwrap_or(&content)
+                    .trim()
+                    .to_string()
             } else {
                 content.trim().to_string()
             };
@@ -88,7 +93,8 @@ mod tests {
         fs::write(
             proj.join("project_state.md"),
             "---\nname: state\ntype: project\n---\nAll tests passing.",
-        ).unwrap();
+        )
+        .unwrap();
         fs::write(proj.join("MEMORY.md"), "# index").unwrap();
 
         let source = MemorySource::new(dir.path().to_path_buf());

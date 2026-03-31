@@ -31,20 +31,25 @@ impl Source for FacetsSource {
             .max_depth(1)
             .into_iter()
             .filter_map(|e| e.ok())
-            .filter(|e| e.path().extension().map_or(false, |x| x == "json"))
+            .filter(|e| e.path().extension().is_some_and(|x| x == "json"))
         {
             let raw = std::fs::read_to_string(entry.path()).map_err(HarvestError::Io)?;
-            let json: serde_json::Value = serde_json::from_str(&raw).map_err(|e| {
-                HarvestError::Parse {
+            let json: serde_json::Value =
+                serde_json::from_str(&raw).map_err(|e| HarvestError::Parse {
                     path: entry.path().display().to_string(),
                     reason: e.to_string(),
-                }
-            })?;
+                })?;
 
             let content = [
-                json.get("underlying_goal").and_then(|v| v.as_str()).unwrap_or(""),
-                json.get("brief_summary").and_then(|v| v.as_str()).unwrap_or(""),
-                json.get("friction_detail").and_then(|v| v.as_str()).unwrap_or(""),
+                json.get("underlying_goal")
+                    .and_then(|v| v.as_str())
+                    .unwrap_or(""),
+                json.get("brief_summary")
+                    .and_then(|v| v.as_str())
+                    .unwrap_or(""),
+                json.get("friction_detail")
+                    .and_then(|v| v.as_str())
+                    .unwrap_or(""),
             ]
             .iter()
             .filter(|s| !s.is_empty())

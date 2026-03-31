@@ -8,10 +8,13 @@ pub struct PiecesSource {
 
 impl PiecesSource {
     pub fn new(base_url: String, max_items: usize) -> Self {
-        Self { base_url, max_items }
+        Self {
+            base_url,
+            max_items,
+        }
     }
 
-    pub fn default() -> Self {
+    pub fn new_default() -> Self {
         Self::new("http://localhost:39300".into(), 50)
     }
 
@@ -49,10 +52,11 @@ impl Source for PiecesSource {
             return Ok(vec![]);
         }
 
-        let json: serde_json::Value = resp.json().await.map_err(|e| HarvestError::SourceFailed {
-            source_id: "pieces".into(),
-            reason: e.to_string(),
-        })?;
+        let json: serde_json::Value =
+            resp.json().await.map_err(|e| HarvestError::SourceFailed {
+                source_id: "pieces".into(),
+                reason: e.to_string(),
+            })?;
 
         let mut items = Vec::new();
         if let Some(activities) = json.as_array() {

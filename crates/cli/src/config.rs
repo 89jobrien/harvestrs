@@ -2,7 +2,10 @@ use clap::Parser;
 use std::path::PathBuf;
 
 #[derive(Parser, Debug)]
-#[command(name = "harvestrs", about = "Sync memory + harvest data sources -> JSONL")]
+#[command(
+    name = "harvestrs",
+    about = "Sync memory + harvest data sources -> JSONL"
+)]
 pub struct Config {
     /// Output file for harvested items (default: stdout)
     #[arg(short, long)]
