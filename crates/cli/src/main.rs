@@ -1,1 +1,3 @@
+mod dedup;
+
 fn main() {}
