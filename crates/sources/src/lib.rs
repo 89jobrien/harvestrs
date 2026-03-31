@@ -3,3 +3,6 @@ pub use facets::FacetsSource;
 
 pub mod memory;
 pub use memory::MemorySource;
+
+pub mod git;
+pub use git::GitSource;
