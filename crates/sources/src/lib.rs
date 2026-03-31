@@ -6,3 +6,9 @@ pub use memory::MemorySource;
 
 pub mod git;
 pub use git::GitSource;
+
+pub mod obsidian;
+pub use obsidian::ObsidianSource;
+
+pub mod pieces;
+pub use pieces::PiecesSource;
