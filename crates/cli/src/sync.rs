@@ -65,7 +65,11 @@ pub fn sync_all(projects_root: &Path, vault_root: &Path) -> Result<()> {
 
         let note = sections.join("");
         let out_path = out_dir.join(format!("{}.md", project_name));
-        std::fs::write(&out_path, note)?;
+        // Only write if content changed to avoid unnecessary vault churn.
+        let existing = std::fs::read_to_string(&out_path).unwrap_or_default();
+        if existing != note {
+            std::fs::write(&out_path, note)?;
+        }
     }
 
     Ok(())
@@ -100,6 +104,38 @@ mod tests {
         assert!(out.exists(), "expected context note at {}", out.display());
         let content = fs::read_to_string(&out).unwrap();
         assert!(content.contains("All tests passing."));
+    }
+
+    #[test]
+    fn does_not_overwrite_unchanged_content() {
+        let projects = TempDir::new().unwrap();
+        let vault = TempDir::new().unwrap();
+
+        let memory_dir = projects
+            .path()
+            .join("-Users-joe-dev-minibox")
+            .join("memory");
+        fs::create_dir_all(&memory_dir).unwrap();
+        fs::write(
+            memory_dir.join("project_state.md"),
+            "---\nname: state\ntype: project\n---\nStable content.",
+        )
+        .unwrap();
+        fs::write(memory_dir.join("MEMORY.md"), "# index").unwrap();
+
+        // First sync — creates the file.
+        sync_all(projects.path(), vault.path()).unwrap();
+        let out = vault.path().join("claude-memory").join("minibox.md");
+        let mtime1 = fs::metadata(&out).unwrap().modified().unwrap();
+
+        // Brief sleep to ensure mtime would differ if re-written.
+        std::thread::sleep(std::time::Duration::from_millis(50));
+
+        // Second sync — content unchanged, file must NOT be rewritten.
+        sync_all(projects.path(), vault.path()).unwrap();
+        let mtime2 = fs::metadata(&out).unwrap().modified().unwrap();
+
+        assert_eq!(mtime1, mtime2, "file was rewritten despite no content change");
     }
 
     #[test]
