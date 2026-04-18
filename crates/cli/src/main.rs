@@ -19,20 +19,33 @@ async fn main() -> Result<()> {
         let projects_root = dirs::home_dir()
             .unwrap_or_default()
             .join(".claude/projects");
-        let vault_root = cfg.vault_path();
-        if vault_root.exists() {
-            sync::sync_all(&projects_root, &vault_root)?;
-            eprintln!("[harvestrs] memory synced to vault");
-        } else {
-            eprintln!(
-                "[harvestrs] vault not found at {}, skipping sync",
-                vault_root.display()
-            );
+        match cfg.vault_path() {
+            Ok(vault_root) if vault_root.exists() => {
+                sync::sync_all(&projects_root, &vault_root)?;
+                eprintln!("[harvestrs] memory synced to vault");
+            }
+            Ok(vault_root) => {
+                eprintln!(
+                    "[harvestrs] vault not found at {}, skipping sync",
+                    vault_root.display()
+                );
+            }
+            Err(e) => {
+                eprintln!("[harvestrs] skipping sync: {e}");
+            }
         }
     }
 
     // 2. Build enabled sources
     let disabled = &cfg.disable_source;
+    let obsidian_path = cfg
+        .vault_path()
+        .map(|v| v.join("_daily"))
+        .unwrap_or_else(|_| {
+            dirs::home_dir()
+                .unwrap_or_default()
+                .join("__obsidian_not_configured")
+        });
     let all_sources: Vec<Box<dyn Source>> = vec![
         Box::new(FacetsSource::new(
             dirs::home_dir()
@@ -48,7 +61,7 @@ async fn main() -> Result<()> {
             GitSource::default_repos(),
             cfg.git_max_commits,
         )),
-        Box::new(ObsidianSource::new(cfg.vault_path().join("_daily"))),
+        Box::new(ObsidianSource::new(obsidian_path)),
         Box::new(PiecesSource::new_default()),
     ];
     let sources: Vec<Box<dyn Source>> = all_sources

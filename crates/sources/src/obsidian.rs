@@ -12,15 +12,12 @@ impl ObsidianSource {
         Self { daily_dir }
     }
 
-    pub fn default_path() -> PathBuf {
+    /// Returns the default vault `_daily` path from `OBSIDIAN_VAULT_PATH`.
+    /// Returns `None` if the env var is not set. No hardcoded machine-specific fallback.
+    pub fn default_path() -> Option<PathBuf> {
         std::env::var("OBSIDIAN_VAULT_PATH")
-            .map(PathBuf::from)
-            .unwrap_or_else(|_| {
-                dirs::home_dir()
-                    .unwrap_or_default()
-                    .join("Library/Mobile Documents/iCloud~md~obsidian/Documents/air-vault")
-            })
-            .join("_daily")
+            .map(|v| PathBuf::from(v).join("_daily"))
+            .ok()
     }
 }
 
