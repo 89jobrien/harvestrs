@@ -33,12 +33,26 @@ impl Source for FacetsSource {
             .filter_map(|e| e.ok())
             .filter(|e| e.path().extension().is_some_and(|x| x == "json"))
         {
-            let raw = std::fs::read_to_string(entry.path()).map_err(HarvestError::Io)?;
-            let json: serde_json::Value =
-                serde_json::from_str(&raw).map_err(|e| HarvestError::Parse {
-                    path: entry.path().display().to_string(),
-                    reason: e.to_string(),
-                })?;
+            let raw = match std::fs::read_to_string(entry.path()) {
+                Ok(r) => r,
+                Err(e) => {
+                    eprintln!(
+                        "[harvestrs/facets] failed to read {}: {e}",
+                        entry.path().display()
+                    );
+                    continue;
+                }
+            };
+            let json: serde_json::Value = match serde_json::from_str(&raw) {
+                Ok(v) => v,
+                Err(e) => {
+                    eprintln!(
+                        "[harvestrs/facets] skipping malformed JSON at {}: {e}",
+                        entry.path().display()
+                    );
+                    continue;
+                }
+            };
 
             let content = [
                 json.get("underlying_goal")
@@ -99,6 +113,26 @@ mod tests {
         assert_eq!(items.len(), 1);
         assert_eq!(items[0].source.0, "facets");
         assert!(items[0].content.contains("fix test failures"));
+    }
+
+    #[tokio::test]
+    async fn skips_malformed_json_and_continues() {
+        let dir = TempDir::new().unwrap();
+        // Write one malformed and one valid facet file.
+        fs::write(dir.path().join("bad.json"), "{ not valid json !!!").unwrap();
+        let facet = serde_json::json!({
+            "session_id": "good-123",
+            "brief_summary": "Valid item",
+            "outcome": "fully_achieved",
+            "underlying_goal": "do something"
+        });
+        fs::write(dir.path().join("good.json"), facet.to_string()).unwrap();
+
+        let source = FacetsSource::new(dir.path().to_path_buf());
+        // Must not return Err — malformed file is skipped, valid file is harvested.
+        let items = source.harvest().await.expect("harvest should not abort on bad JSON");
+        assert_eq!(items.len(), 1, "expected 1 valid item, got {}", items.len());
+        assert!(items[0].content.contains("Valid item"));
     }
 
     #[tokio::test]
