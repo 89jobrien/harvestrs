@@ -35,8 +35,11 @@ pub fn sync_all(projects_root: &Path, vault_root: &Path) -> Result<()> {
             continue;
         }
 
-        // Derive human-readable project name from slug (last segment after last `-`)
-        let project_name = slug.rsplit('-').next().unwrap_or(&slug).to_string();
+        // Use the full normalized slug as the project key to guarantee uniqueness across
+        // vaults, users, and machines. The slug is the directory name under ~/.claude/projects
+        // and is already globally unique for a given Claude installation. Strip only the
+        // leading dash so the filename is readable.
+        let project_name = slug.trim_start_matches('-').to_string();
 
         let mut sections = vec![
             format!("# Claude Session Context — {}\n", project_name),
@@ -100,7 +103,7 @@ mod tests {
 
         sync_all(projects.path(), vault.path()).unwrap();
 
-        let out = vault.path().join("claude-memory").join("minibox.md");
+        let out = vault.path().join("claude-memory").join("Users-joe-dev-minibox.md");
         assert!(out.exists(), "expected context note at {}", out.display());
         let content = fs::read_to_string(&out).unwrap();
         assert!(content.contains("All tests passing."));
@@ -125,7 +128,7 @@ mod tests {
 
         // First sync — creates the file.
         sync_all(projects.path(), vault.path()).unwrap();
-        let out = vault.path().join("claude-memory").join("minibox.md");
+        let out = vault.path().join("claude-memory").join("Users-joe-dev-minibox.md");
         let mtime1 = fs::metadata(&out).unwrap().modified().unwrap();
 
         // Brief sleep to ensure mtime would differ if re-written.
@@ -136,6 +139,31 @@ mod tests {
         let mtime2 = fs::metadata(&out).unwrap().modified().unwrap();
 
         assert_eq!(mtime1, mtime2, "file was rewritten despite no content change");
+    }
+
+    #[test]
+    fn project_name_uses_two_segments_to_avoid_collision() {
+        let projects = TempDir::new().unwrap();
+        let vault = TempDir::new().unwrap();
+
+        // Two different slugs that share the same last segment ("minibox").
+        for slug in ["-Users-alice-dev-minibox", "-Users-bob-dev-minibox"] {
+            let memory_dir = projects.path().join(slug).join("memory");
+            fs::create_dir_all(&memory_dir).unwrap();
+            fs::write(
+                memory_dir.join("state.md"),
+                format!("content for {slug}"),
+            )
+            .unwrap();
+        }
+
+        sync_all(projects.path(), vault.path()).unwrap();
+
+        let out_dir = vault.path().join("claude-memory");
+        // Both project slugs end in "minibox" but differ in second-to-last segment,
+        // so both notes must be written (no collision).
+        let count = fs::read_dir(&out_dir).unwrap().count();
+        assert_eq!(count, 2, "expected 2 distinct output files, got {count}");
     }
 
     #[test]
