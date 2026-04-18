@@ -212,7 +212,6 @@ name = "cli"
 version = "0.1.0"
 dependencies = [
  "anyhow",
- "chrono",
  "clap",
  "dirs",
  "harvester-core",
@@ -525,7 +524,6 @@ dependencies = [
 name = "harvester-core"
 version = "0.1.0"
 dependencies = [
- "anyhow",
  "async-trait",
  "chrono",
  "hex",
@@ -1511,14 +1509,11 @@ dependencies = [
 name = "sources"
 version = "0.1.0"
 dependencies = [
- "anyhow",
  "async-trait",
- "chrono",
  "dirs",
  "git2",
  "harvester-core",
  "reqwest",
- "serde",
  "serde_json",
  "tempfile",
  "tokio",

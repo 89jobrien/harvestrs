@@ -33,15 +33,20 @@ pub struct Config {
 }
 
 impl Config {
-    pub fn dedup_db_path(&self) -> String {
+    pub fn dedup_db_path(&self) -> PathBuf {
+        let path = PathBuf::from(&self.dedup_db);
+
+        // Expand ~ to home directory
         if self.dedup_db.starts_with('~') {
-            self.dedup_db.replacen(
-                '~',
-                &dirs::home_dir().unwrap_or_default().to_string_lossy(),
-                1,
-            )
+            if let Some(home) = dirs::home_dir() {
+                // Remove leading ~ and rejoin with home directory
+                let relative = path.strip_prefix("~").unwrap_or(&path);
+                home.join(relative)
+            } else {
+                path
+            }
         } else {
-            self.dedup_db.clone()
+            path
         }
     }
 

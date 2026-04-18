@@ -58,10 +58,10 @@ async fn main() -> Result<()> {
 
     // 3. Open dedup store
     let db_path = cfg.dedup_db_path();
-    if let Some(parent) = std::path::Path::new(&db_path).parent() {
+    if let Some(parent) = db_path.parent() {
         std::fs::create_dir_all(parent)?;
     }
-    let dedup = DedupStore::open(&db_path)?;
+    let dedup = DedupStore::open(db_path.to_string_lossy().as_ref())?;
 
     // 4. Harvest all sources, deduplicate, write JSONL
     let mut writer: Box<dyn Write> = match &cfg.output {
