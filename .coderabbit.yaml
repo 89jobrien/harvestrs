@@ -1,0 +1,36 @@
+language: "en-US"
+early_access: false
+reviews:
+  profile: "chill"
+  request_changes_workflow: false
+  high_level_summary: true
+  poem: false
+  review_status: true
+  collapse_walkthrough: false
+  auto_review:
+    enabled: true
+    drafts: false
+    base_branches:
+      - main
+  path_filters:
+    - "!**/*.lock"
+    - "!**/vendor/**"
+    - "!**/.ctx/**"
+    - "!**/.superpowers/**"
+  path_instructions:
+    - path: "**/*.rs"
+      instructions: |
+        - Rust edition 2024 conventions.
+        - Prefer returning errors over panicking — no bare .unwrap()/.expect() at runtime.
+        - Use tracing::{warn,error} for observable failures.
+        - Source error isolation: a harvester error in one source (e.g. git, filesystem, HTTP)
+          must never abort sibling sources. Each source's error must be captured independently
+          and reported in the result set without short-circuiting the collection loop.
+        - Async sources use tokio; ensure no blocking calls on the async executor (no std::fs
+          inside async fns — use tokio::fs or spawn_blocking).
+        - Hexagonal architecture: keep core traits in crates/core; adapters in crates/sources;
+          CLI wiring in crates/cli. Do not let source-specific types bleed into core.
+    - path: "**/Cargo.toml"
+      instructions: "Check for yanked or insecure dependency versions."
+chat:
+  auto_reply: true
